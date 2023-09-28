@@ -12,9 +12,10 @@ use Illuminate\Http\RedirectResponse;
 
 //import Facade "Storage"
 use Illuminate\Support\Facades\Storage;
+use App\Models\Post;
 
 class PostController extends Controller
-{    
+{
     /**
      * index
      *
@@ -23,10 +24,10 @@ class PostController extends Controller
     public function index(): View
     {
         //get posts
-        Post::latest()->paginate(5);
+        $posts = Post::latest()->paginate(5);
 
         //render view with posts
-        return view('index', compact('posts'));
+        return view('posts.index', compact('posts'));
     }
 
     /**
@@ -36,22 +37,22 @@ class PostController extends Controller
      */
     public function create(): View
     {
-        return view('create');
+        return view('posts.create');
     }
- 
+
     /**
      * store
      *
      * @param  mixed $request
      * @return RedirectResponse
      */
-    public function store($request): RedirectResponse
+    public function store(Request $request)
     {
         //validate form
         $this->validate($request, [
-            'image'     => 'required|image|mimes:jpeg,jpg,png|max:2048',
-            'title'     => 'required|min:5',
-            'content'   => 'required|min:10'
+            'image' => 'required|image|mimes:jpeg,jpg,png|max:2048',
+            'title' => 'required|min:5',
+            'content' => 'required|min:10'
         ]);
 
         //upload image
@@ -60,15 +61,15 @@ class PostController extends Controller
 
         //create post
         Post::create([
-            'image'     => $image->hashName(),
-            'title'     => $request->title,
-            'content'   => $request->content
+            'image' => $image->hashName(),
+            'title' => $request->title,
+            'content' => $request->content
         ]);
 
         //redirect to index
         return redirect()->route('posts.index')->with(['success' => 'Data Berhasil Disimpan!']);
     }
-    
+
     /**
      * show
      *
@@ -84,21 +85,15 @@ class PostController extends Controller
         return view('posts.show', compact('post'));
     }
 
-    /**
-     * edit
-     *
-     * @param  mixed $id
-     * @return void
-     */
-    public function edit(string $id): View
+    public function edit(string $id)
     {
         //get post by ID
-        $post = Post::findOrFail($id);
+        $post = Post::find($id);
 
         //render view with post
         return view('posts.edit', compact('post'));
     }
-        
+
     /**
      * update
      *
@@ -110,9 +105,9 @@ class PostController extends Controller
     {
         //validate form
         $this->validate($request, [
-            'image'     => 'image|mimes:jpeg,jpg,png|max:2048',
-            'title'     => 'required|min:5',
-            'content'   => 'required|min:10'
+            'image' => 'image|mimes:jpeg,jpg,png|max:2048',
+            'title' => 'required|min:5',
+            'content' => 'required|min:10'
         ]);
 
         //get post by ID
@@ -126,21 +121,21 @@ class PostController extends Controller
             $image->storeAs('public/posts', $image->hashName());
 
             //delete old image
-            Storage::delete('public/posts/'.$post->image);
+            Storage::delete('public/posts/' . $post->image);
 
             //update post with new image
             $post->update([
-                'image'     => $image->hashName(),
-                'title'     => $request->title,
-                'content'   => $request->content
+                'image' => $image->hashName(),
+                'title' => $request->title,
+                'content' => $request->content
             ]);
 
         } else {
 
             //update post without image
             $post->update([
-                'title'     => $request->title,
-                'content'   => $request->content
+                'title' => $request->title,
+                'content' => $request->content
             ]);
         }
 
@@ -154,13 +149,13 @@ class PostController extends Controller
      * @param  mixed $post
      * @return void
      */
-    public function destroy($post): RedirectResponse
+    public function destroy(string $post)
     {
         //get post by ID
-        $post = Post::findOrFail();
+        $post = Post::find($post);
 
         //delete image
-        Storage::delete('public/posts/'. $post->image);
+        Storage::delete('public/posts/' . $post->image);
 
         //delete post
         $post->delete();
